@@ -152,9 +152,9 @@ class ABReweight(BaseABMethod):
         w8_threatment = w8_func(self.threatment_views)
 
         self.control_ctr = (self.control_clicks / self.control_views
-                            ) * w8_control / w8_threatment.sum()
+                            ) * w8_control / w8_threatment.mean()
         self.threatment_ctr = (self.threatment_clicks / self.threatment_views
-                               ) * w8_threatment / w8_threatment.sum()
+                               ) * w8_threatment / w8_threatment.mean()
 
 
 class ABLinearize(BaseABMethod):
