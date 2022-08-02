@@ -156,7 +156,8 @@ class BaseABMethod:
                 'relative_uplift':uplift,
                 'ci_left':left_bound,
                 'ci_right':right_bound,
-                'ci_lenght':ci_lenght
+                'ci_lenght':ci_lenght,
+                'ci_left_lenght':abs(self.uplift - left_bound),
                 }
 
 
@@ -173,6 +174,8 @@ class ABReweight(BaseABMethod):
         self.control_ctr = (self.control_clicks / self.control_views) * w8_control / w8_threatment.mean()
         self.threatment_ctr = (self.threatment_clicks / self.threatment_views) * w8_threatment / w8_threatment.mean()
 
+        self.uplift = self.threatment_ctr.mean() - self.control_ctr.mean()
+
 
 class ABLinearize(BaseABMethod):
     ''' 
@@ -185,6 +188,8 @@ class ABLinearize(BaseABMethod):
         self.control_ctr = self.control_clicks - self.control_views * k
         self.threatment_ctr = self.threatment_clicks - self.threatment_views * k
 
+        self.uplift = self.threatment_ctr.mean() - self.control_ctr.mean()
+
 
 
 class ABBootstrap(BaseABMethod):
@@ -192,6 +197,7 @@ class ABBootstrap(BaseABMethod):
     Пуассоновский бутстрап среднего
     '''
     def ci_check(self,n_bootstrap=1000):
+        self.calc_metric()
         bts_shape = np.minimum(self.control_clicks.shape[0],self.threatment_clicks.shape[0])
 
         self.control_clicks = self.control_clicks[:bts_shape]
@@ -227,6 +233,7 @@ class ABBootstrap(BaseABMethod):
                 'ci_left': left_bound,
                 'ci_right': right_bound,
                 'ci_lenght': ci_lenght,
+                'ci_left_lenght':abs(self.uplift - left_bound),
                 }
 
 
@@ -251,6 +258,8 @@ class ABBucketing(BaseABMethod):
 
             self.control_ctr[step] = self.control_clicks[idx_start:idx_stop].sum() / self.control_views[idx_start:idx_stop].sum()
             self.threatment_ctr[step] = self.threatment_clicks[idx_start:idx_stop].sum() / self.threatment_views[idx_start:idx_stop].sum()
+            
+        self.uplift = self.threatment_ctr.mean() - self.control_ctr.mean()
 
 
 
@@ -273,7 +282,7 @@ class ABBayes(BaseABMethod):
         return g
 
     def ci_check(self) -> dict:
-        
+        self.calc_metric()
         beta_control = sps.beta(self.control_clicks.sum()+1,self.control_views.sum()+1)
         beta_threatment = sps.beta(self.threatment_clicks.sum()+1,self.threatment_views.sum()+1)
         
@@ -301,6 +310,7 @@ class ABBayes(BaseABMethod):
             'ci_left': left_bound,
             'ci_right': right_bound,
             'ci_lenght': ci_lenght,
+            'ci_left_lenght':abs(self.uplift - left_bound),
                 }
 
 class ABML(BaseABMethod):
@@ -345,6 +355,7 @@ class ABML(BaseABMethod):
                 'ci_left': model.conf_int()[0][0],
                 'ci_right': model.conf_int()[0][1],
                 'ci_lenght': model.conf_int()[0][1] - model.conf_int()[0][0],
+                'ci_left_lenght':abs(self.uplift - model.conf_int()[0][0]),
                 }
                     
 
