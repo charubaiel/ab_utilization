@@ -32,6 +32,7 @@ poetry.lock - файл поетри для восстановления окру
 [Большой гайд по оптимизации от VK](https://vkteam.medium.com/practitioners-guide-to-statistical-tests-ed2d580ef04f)  
 [AB лайфхаки авито  Часть 1 ( тестирование критериев )](https://habr.com/ru/company/avito/blog/571094/)  
 [Антипаттерны АБ](https://www.evanmiller.org/how-not-to-run-an-ab-test.html)  
+[Uber важность правильной оценки](https://eng.uber.com/analyzing-experiment-outcomes/)  
 
 CUPED   
 [ AB лайфхаки авито  Часть 2 ( сниженеие дисперсии и джедайские техники )](https://habr.com/ru/company/avito/blog/571096/)  
