@@ -236,6 +236,50 @@ class ABBootstrap(BaseABMethod):
                 'ci_left_lenght':abs(self.uplift - left_bound),
                 }
 
+class ABBootstrap_bayes(BaseABMethod):
+    '''
+    Пуассоновский бутстрап среднего
+    '''
+    def ci_check(self,n_bootstrap=1000):
+        self.calc_metric()
+        bts_shape = np.minimum(self.control_clicks.shape[0],self.threatment_clicks.shape[0])
+
+        self.control_clicks = self.control_clicks[:bts_shape]
+        self.threatment_clicks = self.threatment_clicks[:bts_shape]
+        
+        self.control_views = self.control_views[:bts_shape]
+        self.threatment_views = self.threatment_views[:bts_shape]
+        
+        bayes_bootstraps = sps.dirichlet(np.ones(bts_shape)).rvs(n_bootstrap)
+
+        ctr_control = np.matmul(self.control_clicks, bayes_bootstraps.T) / np.matmul(self.control_views, bayes_bootstraps.T)
+        ctr_threatment = np.matmul(self.threatment_clicks, bayes_bootstraps.T) / np.matmul(self.threatment_views, bayes_bootstraps.T)
+
+        ctr_control = np.random.choice(ctr_control,ctr_control.shape[0])
+        ctr_threatment = np.random.choice(ctr_threatment,ctr_threatment.shape[0])
+
+        left_bound,right_bound = np.quantile(ctr_threatment - ctr_control,[0.025, 0.975])
+        ci_lenght = right_bound - left_bound
+
+        effect = ctr_threatment.mean() - ctr_control.mean()
+        
+        bts_diff = np.sum(ctr_threatment < ctr_control )
+
+        pvalue_tt = 2 * np.minimum (bts_diff,n_bootstrap - bts_diff) / n_bootstrap
+
+        uplift = effect / ctr_control.mean()
+       
+            
+        return {'ttest': pvalue_tt,
+                'mwtest': None,
+                'uplift': effect,
+                'relative_uplift':uplift,
+                'ci_left': left_bound,
+                'ci_right': right_bound,
+                'ci_lenght': ci_lenght,
+                'ci_left_lenght':abs(self.uplift - left_bound),
+                }
+
 
 class ABBucketing(BaseABMethod):
     '''
@@ -395,6 +439,7 @@ def generate_tests(control_views:np.ndarray,
     result.update({'linearization':ABLinearize (control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
     result.update({'bucketing':ABBucketing(control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
     result.update({'bootstrap':ABBootstrap(control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
+    result.update({'bootstrap_b':ABBootstrap_bayes(control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
     result.update({'bayesian':ABBayes(control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
     result.update({'ML':ABML(control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
     result.update({'Combo':ABCombo(control_views,control_clicks,threatment_views,threatment_clicks).ci_check()})
