@@ -327,22 +327,25 @@ class ABBayes(BaseABMethod):
 
     def ci_check(self) -> dict:
         self.calc_metric()
-        beta_control = sps.beta(self.control_clicks.sum()+1,self.control_views.sum()+1)
-        beta_threatment = sps.beta(self.threatment_clicks.sum()+1,self.threatment_views.sum()+1)
+       
+        beta_control = sps.beta(self.control_clicks.sum()+1,
+                                self.control_views.sum() - self.control_clicks.sum()+1)
+        beta_threatment = sps.beta(self.threatment_clicks.sum()+1,
+                                   self.threatment_views.sum() - self.threatment_clicks.sum()+1)
         
         effect = beta_threatment.mean() - beta_control.mean()
         
-        diff =  beta_threatment.rvs(10000) - beta_control.rvs(10000)
+        self.diff =  beta_threatment.rvs(10000) - beta_control.rvs(10000)
 
         uplift = effect / beta_control.mean()
         
-        diff_theoretical = sps.norm(scale=diff.std(),loc=diff.mean())
+        self.diff_theoretical = sps.norm(scale=self.diff.std(),loc=self.diff.mean())
 
-        left_bound, right_bound = diff_theoretical.ppf([0.025, 0.975])
+        left_bound, right_bound = self.diff_theoretical.ppf([0.025, 0.975])
 
         ci_lenght = right_bound - left_bound
 
-        p = diff_theoretical.cdf(x=0)
+        p = self.diff_theoretical.cdf(x=0)
 
         pval  = min(p,1-p) * 2
 
