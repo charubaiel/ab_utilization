@@ -335,7 +335,7 @@ class ABBayes(BaseABMethod):
         
         effect = beta_threatment.mean() - beta_control.mean()
         
-        self.diff =  beta_threatment.rvs(10000) - beta_control.rvs(10000)
+        self.diff =  beta_threatment.rvs(100000) - beta_control.rvs(100000)
 
         uplift = effect / beta_control.mean()
         
