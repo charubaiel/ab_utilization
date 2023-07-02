@@ -242,21 +242,15 @@ class ABBootstrap_bayes(BaseABMethod):
     '''
     def ci_check(self,n_bootstrap=1000):
         self.calc_metric()
-        bts_shape = np.minimum(self.control_clicks.shape[0],self.threatment_clicks.shape[0])
+        max_values = max(self.control_clicks.shape[0],
+                    self.threatment_clicks.shape[0])
 
-        self.control_clicks = self.control_clicks[:bts_shape]
-        self.threatment_clicks = self.threatment_clicks[:bts_shape]
+       
         
-        self.control_views = self.control_views[:bts_shape]
-        self.threatment_views = self.threatment_views[:bts_shape]
-        
-        bayes_bootstraps = sps.dirichlet(np.ones(bts_shape)).rvs(n_bootstrap)
+        bayes_bootstraps = sps.dirichlet(np.ones(max_values)).rvs(n_bootstrap).astype('float16')
 
-        ctr_control = np.matmul(self.control_clicks, bayes_bootstraps.T) / np.matmul(self.control_views, bayes_bootstraps.T)
-        ctr_threatment = np.matmul(self.threatment_clicks, bayes_bootstraps.T) / np.matmul(self.threatment_views, bayes_bootstraps.T)
-
-        ctr_control = np.random.choice(ctr_control,ctr_control.shape[0])
-        ctr_threatment = np.random.choice(ctr_threatment,ctr_threatment.shape[0])
+        ctr_control = self.control_ctr @ bayes_bootstraps.T[:self.control_ctr.shape[0]]
+        ctr_threatment = self.threatment_ctr @ bayes_bootstraps.T[:self.control_ctr.shape[0]]
 
         left_bound,right_bound = np.quantile(ctr_threatment - ctr_control,[0.025, 0.975])
         ci_lenght = right_bound - left_bound
@@ -267,7 +261,7 @@ class ABBootstrap_bayes(BaseABMethod):
 
         pvalue_tt = 2 * np.minimum (bts_diff,n_bootstrap - bts_diff) / n_bootstrap
 
-        uplift = effect / ctr_control.mean()
+        uplift = ctr_threatment.mean() / ctr_control.mean() -1
        
             
         return {'ttest': pvalue_tt,
